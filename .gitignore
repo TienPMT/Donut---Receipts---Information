@@ -1,0 +1,6 @@
+.venv/
+donut_checkpoints/
+data/
+Archive/
+__pycache__/
+donut_result/
