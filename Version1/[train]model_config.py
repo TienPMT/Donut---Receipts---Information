@@ -11,7 +11,7 @@ from transformers import (
 # --- CẤU HÌNH ĐƯỜNG DẪN & HẰNG SỐ ---
 TRAIN_IMG_PATH = "./data/train_resized"
 METADATA_TRAIN = "./data/train_metadata.jsonl"
-VAL_IMG_PATH = "./data/val_resized"      # Đường dẫn ảnh validation đã resize
+VAL_IMG_PATH = "./data/val_images"
 METADATA_VAL = "./data/val_metadata.jsonl" # File metadata validation
 
 MODEL_NAME = "naver-clova-ix/donut-base"

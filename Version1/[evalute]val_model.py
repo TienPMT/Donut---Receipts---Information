@@ -68,23 +68,25 @@ def crop_image_sliding_window(img, window_height=1200, overlap=400):
     return crops
 
 def merge_predictions(crop_preds):
-    """Gộp kết quả từ các mảng cắt. Ưu tiên lấy chuỗi đoán được dài nhất"""
+    """Gộp kết quả từ các mảng cắt. Ưu tiên lấy giá trị có nội dung từ các thẻ XML"""
+    # Lưu ý: Đồng bộ thẻ 'address' thay vì 'addr'
     merged = {"seller": "", "address": "", "timestamp": "", "total": ""}
     for field in merged.keys():
-        best_val = ""
+        values = []
         for seq in crop_preds:
             val = extract_field_seq(seq, field)
-            # Nếu mảng cắt này bắt được text và text đó dài hơn cái trước thì lấy
-            if len(val) > len(best_val):
-                best_val = val
-        merged[field] = best_val
+            if val and val not in values:
+                values.append(val)
+        
+        # Gộp các đoạn text tìm được, ưu tiên các đoạn không trùng lặp
+        merged[field] = " ".join(values).strip()
     return merged
 
 def similarity_score(label, pred):
     return SequenceMatcher(None, label, pred).ratio()
-
 def extract_field_seq(seq, tag):
-    # Tìm kiếm dữ liệu nằm giữa thẻ mở <s_tag> và thẻ đóng </s_tag>
+    # Đồng bộ hóa tên thẻ giữa code và model
+    # Model bạn train dùng <s_address>, nên nếu tag là 'address' nó sẽ tìm đúng.
     pattern = f"<s_{tag}>(.*?)</s_{tag}>"
     match = re.search(pattern, seq)
     if match:
@@ -143,8 +145,9 @@ def main():
     for sample in tqdm(val_samples, desc="Processing"):
         img_name = sample["file_name"]
         ground_truth_str = sample["ground_truth"]
-        
+
         img_path = os.path.join(VAL_IMG_PATH, img_name)
+        
         if not os.path.exists(img_path):
             continue
             

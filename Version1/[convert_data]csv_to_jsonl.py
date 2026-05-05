@@ -77,9 +77,19 @@ def csv_to_jsonl(csv_path, output_path):
 
 if __name__ == "__main__":
     os.makedirs("./data", exist_ok=True)
-    # Đảm bảo file train_final.csv và val_final.csv đã tồn tại (chạy split_data.py trước nếu cần)
-    if os.path.exists("./data/train_final.csv"):
-        csv_to_jsonl("./data/train_final.csv", "./data/train_metadata.jsonl")
     
-    if os.path.exists("./data/val_final.csv"):
-        csv_to_jsonl("./data/val_final.csv", "./data/val_metadata.jsonl")
+    # Path to input CSV files in Archive folder
+    train_csv_path = "./Archive/mcocr_train_df.csv"
+    val_csv_path = "./Archive/mcocr_val_df.csv"
+    
+    # Chuyển đổi file train
+    if os.path.exists(train_csv_path):
+        csv_to_jsonl(train_csv_path, "./data/train_metadata.jsonl")
+    else:
+        print(f"Không tìm thấy file {train_csv_path}")
+        
+    # Chuyển đổi file val
+    if os.path.exists(val_csv_path):
+        csv_to_jsonl(val_csv_path, "./data/val_metadata.jsonl")
+    else:
+        print(f"Không tìm thấy file {val_csv_path}")
