@@ -52,7 +52,7 @@ def train():
         eval_steps=200,
         save_total_limit=5,
         bf16=True,
-        dataloader_num_workers=4,
+        dataloader_num_workers=0, # Debug: Chuyển về 0 trên Windows để tránh lỗi multiprocessing
         dataloader_pin_memory=True,
         gradient_checkpointing=True,
         optim="adamw_torch_fused",

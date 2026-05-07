@@ -1,13 +1,14 @@
-# Python
+# Python & Virtual Environment
 __pycache__/
 *.py[cod]
 *$py.class
 .venv/
+.env
 build/
 dist/
 *.egg-info/
 
-# Donut Checkpoints & Results (Dữ liệu nặng của model)
+# Donut Checkpoints & Weights (Dữ liệu model rất nặng)
 donut_checkpoints/
 donut_result/
 Version1/donut_checkpoints/
@@ -15,19 +16,28 @@ Version1/donut_result/
 Version2/donut_checkpoints/
 Version2/donut_result/
 checkpoint-*/
+*.safetensors
+*.pt
+*.pth
 
-# Data & Datasets (Tránh upload hàng ngàn ảnh lên GitHub)
+# Data & Images (Tránh upload hàng ngàn file ảnh)
 Archive/
 data/
-Version1/data/
-Version2/data1/
+Version1/data/*/
+Version2/data1/*/
 Version2/Train_data/train/
 Version2/Train_data/val/
+Version2/Train_data/test/
 Version2/Train_data/real/
-# Lưu trữ các file metadata (jsonl, csv) là đủ để reconstruct dataset
-!Version2/Train_data/*.jsonl
-!Version2/data1/*.csv
+Version2/Train_data/real2/
 
-# OS
+# Giữ lại các file metadata (Quan trọng để reconstruct dataset)
+!**/data/*.jsonl
+!**/data1/*.csv
+!**/Train_data/*.jsonl
+!**/data/*.csv
+
+# Log & Misc
 .DS_Store
 Thumbs.db
+*.log

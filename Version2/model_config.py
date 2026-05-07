@@ -60,18 +60,38 @@ class DonutDataset(Dataset):
         ).pixel_values.squeeze()
         
         # Xử lý Ground Truth (Labels)
-        gt_dict = json.loads(item["ground_truth"])["gt_parse"]
-        # Thêm trường seller_name riêng biệt để tránh nhầm với thẻ bao ngoài <s_seller>
-        gt_string = f"<s_seller><s_seller_name>{gt_dict.get('seller', '')}</s_seller_name>" \
-                    f"<s_address>{gt_dict.get('address', '')}</s_address>" \
-                    f"<s_timestamp>{gt_dict.get('timestamp', '')}</s_timestamp>" \
-                    f"<s_total_cost>{gt_dict.get('total_cost', '')}</s_total_cost></s_seller>"
+        try:
+            gt_data = json.loads(item["ground_truth"])
+            # Tự động nhận diện format (gt_parse hoặc cấu trúc phẳng)
+            if "gt_parse" in gt_data:
+                gt_dict = gt_data["gt_parse"]
+                # Cấu trúc cũ: {"seller": "name", ...}
+                seller_val = gt_dict.get('seller', '')
+                addr_val = gt_dict.get('address', '')
+                time_val = gt_dict.get('timestamp', '')
+                cost_val = gt_dict.get('total_cost', '')
+            else:
+                # Cấu trúc mới từ label_real_images.py: {"seller": {"seller_name": "...", ...}}
+                seller_parent = gt_data.get('seller', {})
+                seller_val = seller_parent.get('seller_name', '')
+                addr_val = seller_parent.get('address', '')
+                time_val = seller_parent.get('timestamp', '')
+                cost_val = seller_parent.get('total_cost', '')
+        except Exception as e:
+            print(f"Lỗi parse Ground Truth tại file {item['file_name']}: {e}")
+            seller_val = addr_val = time_val = cost_val = "N/A"
+
+        # Thống nhất chuỗi nhãn theo cấu trúc Tag mới
+        gt_string = f"<s_seller><s_seller_name>{seller_val}</s_seller_name>" \
+                    f"<s_address>{addr_val}</s_address>" \
+                    f"<s_timestamp>{time_val}</s_timestamp>" \
+                    f"<s_total_cost>{cost_val}</s_total_cost></s_seller>"
         
         labels = self.processor.tokenizer(
             gt_string, 
-            add_special_tokens=True, # Bật để thêm </s> tự động
+            add_special_tokens=True,
             max_length=self.max_length, 
-            padding="max_length", # Padding cố định cho ổn định loss
+            padding="max_length", 
             truncation=True, 
             return_tensors="pt"
         ).input_ids.squeeze()
