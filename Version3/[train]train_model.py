@@ -1,16 +1,14 @@
 import os
+import torch
+import warnings
+from transformers import Seq2SeqTrainer, Seq2SeqTrainingArguments, EarlyStoppingCallback
+from model_config import setup_model_and_processor, DonutDataset, collate_fn
 
 # TẮT WARNING
 os.environ["HF_HUB_DISABLE_SYMLINKS_WARNING"] = "1"
 os.environ["TRANSFORMERS_NO_ADVISORY_WARNINGS"] = "1"
 os.environ["TORCH_CPP_LOG_LEVEL"] = "ERROR"
 os.environ["PYTHONWARNINGS"] = "ignore"
-
-import warnings
-import torch
-from transformers import Seq2SeqTrainer, Seq2SeqTrainingArguments
-from model_config import setup_model_and_processor, DonutDataset, collate_fn
-
 warnings.filterwarnings("ignore")
 
 def train():
@@ -23,18 +21,19 @@ def train():
     # Khởi tạo mô hình
     model, processor = setup_model_and_processor(device)
 
-    # Load Dataset
+    # Lấy đường dẫn tuyệt đối của folder hiện tại (Version3)
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+    DATA_DIR = r"D:\data\HUIT\Nam3\HK2\Deep Learning\TaiLieuThayBao\Project\Donut\Version3\data1"    
+    # Load Dataset từ Version 3
     train_dataset = DonutDataset(
-        r"d:\data\HUIT\Nam3\HK2\Deep Learning\TaiLieuThayBao\Project\Donut\Version2\Train_data\train_metadata_clean.jsonl", 
-        processor, split="train"
+        os.path.join(DATA_DIR, "train_metadata.jsonl"), 
+        processor, max_length=768, split="train"
     )
     val_dataset = DonutDataset(
-        r"d:\data\HUIT\Nam3\HK2\Deep Learning\TaiLieuThayBao\Project\Donut\Version2\Train_data\val_metadata_clean.jsonl", 
-        processor, split="val"
+        os.path.join(DATA_DIR, "validation_metadata.jsonl"), 
+        processor, max_length=768, split="val"
     )
 
-    # Xác định đường dẫn tuyệt đối cho Version2
-    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
     CHECKPOINT_DIR = os.path.join(BASE_DIR, "donut_checkpoints")
     RESULT_DIR = os.path.join(BASE_DIR, "donut_result")
 
@@ -58,6 +57,10 @@ def train():
         optim="adamw_torch_fused",
         report_to="none",
         predict_with_generate=True,
+        generation_max_length=768,
+        load_best_model_at_end=True,    
+        metric_for_best_model="eval_loss",
+        greater_is_better=False,
     )
 
     trainer = Seq2SeqTrainer(
@@ -65,13 +68,14 @@ def train():
         args=training_args,
         train_dataset=train_dataset,
         eval_dataset=val_dataset,
-        data_collator=collate_fn
+        data_collator=collate_fn,
+        callbacks=[EarlyStoppingCallback(early_stopping_patience=5)]
     )
 
-    print(f"Bắt đầu Training Version 2... (Lưu tại: {CHECKPOINT_DIR})")
+    print(f"Bắt đầu Training Version 3... (Lưu tại: {CHECKPOINT_DIR})")
     trainer.train()
     
-    # Lưu kết quả cuối cùng vào folder result của Version2
+    # Lưu kết quả cuối cùng
     model.save_pretrained(RESULT_DIR)
     processor.save_pretrained(RESULT_DIR)
     print(f"Đã lưu mô hình cuối cùng tại {RESULT_DIR}")
