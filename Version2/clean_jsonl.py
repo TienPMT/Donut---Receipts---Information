@@ -4,26 +4,20 @@ import os
 import re
 import unicodedata
 
-# Viet chars for space-fix
 V_CHARS = "aáàảãạâấầẩẫậăắằẳẵặeéèẻẽẹêếềểễệiíìỉĩịoóòỏõọôốồổỗộơớờởỡợuúùủũụưứừửữựyýỳỷỹỵđ"
 V_CHARS += V_CHARS.upper()
-
 
 def clean_text(text: str) -> str:
     if not isinstance(text, str):
         return text
     text = unicodedata.normalize("NFC", text)
 
-    # Remove spaces inserted between a Vietnamese letter and a following lowercase letter
     text = re.sub(rf"([{V_CHARS}])\s+([a-z{V_CHARS.lower()}])", r"\1\2", text)
 
-    # Remove spaces before punctuation
     text = re.sub(r"\s+([,.;:!?])", r"\1", text)
 
-    # Normalize extra spaces
     text = re.sub(r"\s+", " ", text).strip()
     return text
-
 
 def clean_ground_truth(gt_obj: dict) -> dict:
     if "gt_parse" in gt_obj and isinstance(gt_obj["gt_parse"], dict):
@@ -39,7 +33,6 @@ def clean_ground_truth(gt_obj: dict) -> dict:
             if isinstance(v, str):
                 gt_obj[k] = clean_text(v)
     return gt_obj
-
 
 def process_file(input_path: str, output_path: str) -> None:
     total = 0
@@ -72,7 +65,6 @@ def process_file(input_path: str, output_path: str) -> None:
     print(f"[INFO] {input_path} -> {output_path}")
     print(f"[INFO] total={total} changed={changed}")
 
-
 def main() -> None:
     parser = argparse.ArgumentParser(description="Clean Vietnamese spacing in JSONL ground_truth.")
     parser.add_argument("--data_dir", default="Train_data", help="Folder containing JSONL files")
@@ -93,7 +85,6 @@ def main() -> None:
         output_name = f"{root}{args.suffix}{ext}"
         output_path = os.path.join(data_dir, output_name)
         process_file(input_path, output_path)
-
 
 if __name__ == "__main__":
     main()

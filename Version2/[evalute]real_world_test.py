@@ -5,7 +5,6 @@ from PIL import Image
 from transformers import DonutProcessor, VisionEncoderDecoderModel
 import re
 
-# --- CẤU HÌNH ---
 MODEL_PATH = r"D:\data\HUIT\Nam3\HK2\Deep Learning\TaiLieuThayBao\Project\Donut\Version2\donut_result"
 REAL_IMG_DIR = r"D:\data\HUIT\Nam3\HK2\Deep Learning\TaiLieuThayBao\Project\Donut\Version2\Train_data\real2"
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
@@ -15,15 +14,15 @@ IMAGE_WIDTH = 960
 
 def run_prediction(model, processor, image):
     pixel_values = processor(
-        image, 
-        return_tensors="pt", 
-        do_resize=True, 
-        size={"height": IMAGE_HEIGHT, "width": IMAGE_WIDTH}, 
+        image,
+        return_tensors="pt",
+        do_resize=True,
+        size={"height": IMAGE_HEIGHT, "width": IMAGE_WIDTH},
         do_align_long_axis=False
     ).pixel_values.to(DEVICE)
 
     start_token_id = processor.tokenizer.convert_tokens_to_ids("<s_seller>")
-    
+
     outputs = model.generate(
         pixel_values,
         max_length=512,
@@ -36,18 +35,18 @@ def run_prediction(model, processor, image):
     sequence = processor.batch_decode(outputs)[0]
     sequence = sequence.replace(processor.tokenizer.eos_token, "").replace(processor.tokenizer.pad_token, "")
     sequence = re.sub(r"<pad>", "", sequence)
-    
+
     try:
         prediction = processor.token2json(sequence)
     except Exception:
         prediction = sequence
-        
+
     return prediction, sequence
 
 def main():
     print(f"--- ĐÁNH GIÁ THỰC CHIẾN DONUT ---")
     print(f"Đang tải model từ: {MODEL_PATH}")
-    
+
     if not os.path.exists(MODEL_PATH):
         print(f"[LỖI] Không tìm thấy model.")
         return
@@ -66,7 +65,7 @@ def main():
     for i, file_name in enumerate(image_files):
         img_path = os.path.join(REAL_IMG_DIR, file_name)
         image = Image.open(img_path).convert("RGB")
-        
+
         prediction, raw_seq = run_prediction(model, processor, image)
 
         print(f"\n[{i+1}/{len(image_files)}] Ảnh: {file_name}")

@@ -2,21 +2,18 @@ import os
 import json
 from PIL import Image
 
-# --- CẤU HÌNH ---
 REAL_IMG_DIR = r"D:\data\HUIT\Nam3\HK2\Deep Learning\TaiLieuThayBao\Project\Donut\Version2\Train_data\real"
 OUTPUT_JSONL = r"D:\data\HUIT\Nam3\HK2\Deep Learning\TaiLieuThayBao\Project\Donut\Version2\Train_data\real_metadata.jsonl"
 
 def create_label(file_name):
     print(f"\n--- ĐANG GÁN NHÃN CHO ẢNH: {file_name} ---")
     print("Nhập thông tin (để trống và Enter nếu không có/không thấy):")
-    
+
     seller_name = input("1. Tên cửa hàng (seller_name): ").strip() or "N/A"
     address = input("2. Địa chỉ (address): ").strip() or "N/A"
     timestamp = input("3. Thời gian/Ngày tháng (timestamp): ").strip() or "N/A"
     total_cost = input("4. Tổng tiền (total_cost): ").strip() or "N/A"
 
-    # Tạo cấu trúc Ground Truth giống như tập Train
-    # Cấu trúc: {"seller": {"seller_name": "...", "address": "...", "timestamp": "...", "total_cost": "..."}}
     label_dict = {
         "seller": {
             "seller_name": seller_name,
@@ -33,7 +30,7 @@ def main():
         return
 
     image_files = [f for f in os.listdir(REAL_IMG_DIR) if f.lower().endswith(('.png', '.jpg', '.jpeg'))]
-    
+
     if not image_files:
         print("Không tìm thấy ảnh nào trong thư mục real.")
         return
@@ -42,13 +39,12 @@ def main():
 
     with open(OUTPUT_JSONL, 'w', encoding='utf-8') as f:
         for file_name in image_files:
-            # Mở ảnh để người dùng xem (Windows sẽ mở bằng ứng dụng mặc định)
+
             img_path = os.path.join(REAL_IMG_DIR, file_name)
-            os.startfile(img_path) 
-            
+            os.startfile(img_path)
+
             ground_truth = create_label(file_name)
-            
-            # Format Donut: {"file_name": "...", "ground_truth": "..."}
+
             line = {
                 "file_name": file_name,
                 "ground_truth": ground_truth

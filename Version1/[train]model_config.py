@@ -4,21 +4,17 @@ import torch
 from PIL import Image
 from torch.utils.data import Dataset
 from transformers import (
-    DonutProcessor, 
+    DonutProcessor,
     VisionEncoderDecoderModel
 )
 
-# --- CẤU HÌNH ĐƯỜNG DẪN & HẰNG SỐ ---
 TRAIN_IMG_PATH = "./data/train_resized"
 METADATA_TRAIN = "./data/train_metadata.jsonl"
 VAL_IMG_PATH = "./data/val_images"
-METADATA_VAL = "./data/val_metadata.jsonl" # File metadata validation
+METADATA_VAL = "./data/val_metadata.jsonl"
 
 MODEL_NAME = "naver-clova-ix/donut-base"
 
-# Kích thước ảnh thực tế (Height, Width) - Lưu ý đảo ngược so với OpenCV (Width, Height)
-# OpenCV/PIL: (960, 1280) -> (Width, Height)
-# Donut Config: [1280, 960] -> [Height, Width]
 IMAGE_HEIGHT = 1280
 IMAGE_WIDTH = 960
 
@@ -27,7 +23,7 @@ def check_gpu():
     if not torch.cuda.is_available():
         print("Khong su dung GPU. Chuong trinh se ket thuc.")
         exit()
-    
+
     device_name = torch.cuda.get_device_name(0)
     print(f"Đang sử dụng GPU: {device_name}")
     return "cuda"
@@ -39,7 +35,7 @@ class DonutDataset(Dataset):
         self.processor = processor
         self.max_length = max_length
         self.metadata = []
-        
+
         if not os.path.exists(metadata_path):
              print(f"Lỗi: Không tìm thấy file {metadata_path}")
              return
@@ -58,23 +54,21 @@ class DonutDataset(Dataset):
     def __getitem__(self, idx):
         sample = self.metadata[idx]
         img_path = os.path.join(self.dataset_path, sample["file_name"])
-        
+
         try:
             image = Image.open(img_path).convert("RGB")
         except Exception as e:
             print(f"Warning: Lỗi đọc ảnh {img_path}: {e}")
             image = Image.new('RGB', (IMAGE_WIDTH, IMAGE_HEIGHT), (0, 0, 0))
-            
-        # Quan trọng: do_resize=True để đảm bảo ảnh đầu vào đúng kích thước mong muốn
-        # Nếu ảnh đã resize chuẩn rồi thì có thể để False, nhưng để True cho an toàn
+
         pixel_values = self.processor(
-            image, 
-            return_tensors="pt", 
-            do_resize=True, 
+            image,
+            return_tensors="pt",
+            do_resize=True,
             size={"height": IMAGE_HEIGHT, "width": IMAGE_WIDTH},
             do_align_long_axis=False
         ).pixel_values
-        
+
         labels = self.processor.tokenizer(
             sample["ground_truth"],
             add_special_tokens=False,
@@ -91,31 +85,25 @@ class DonutDataset(Dataset):
 def setup_model_and_processor(device):
     """Khởi tạo model, processor và cấu hình các token đặc biệt"""
     print(f"Đang tải model base '{MODEL_NAME}'...")
-    
+
     processor = DonutProcessor.from_pretrained(MODEL_NAME)
     model = VisionEncoderDecoderModel.from_pretrained(MODEL_NAME)
-    
-    # --- CẤU HÌNH LẠI KÍCH THƯỚC MODEL ---
-    # Giảm kích thước ảnh đầu vào của model từ 2560x1920 xuống 1280x960
-    # Giúp giảm 4 lần lượng tính toán và VRAM
-    model.config.encoder.image_size = [IMAGE_HEIGHT, IMAGE_WIDTH] 
-    
-    # Cập nhật processor config (để sau này save model nó nhớ config này)
+
+    model.config.encoder.image_size = [IMAGE_HEIGHT, IMAGE_WIDTH]
+
     processor.image_processor.size = {"height": IMAGE_HEIGHT, "width": IMAGE_WIDTH}
     processor.image_processor.do_align_long_axis = False
 
     model.to(device)
 
-    # Thêm Special Tokens cho hóa đơn tiếng Việt
     new_tokens = ["<s_seller>", "<s_addr>", "<s_total>", "<s_timestamp>"]
     processor.tokenizer.add_tokens(new_tokens)
     model.decoder.resize_token_embeddings(len(processor.tokenizer))
 
-    # Cấu hình Token ID chuẩn cho quá trình decode
     model.config.decoder_start_token_id = processor.tokenizer.convert_tokens_to_ids("<s_seller>")
     model.config.pad_token_id = processor.tokenizer.pad_token_id
     model.config.eos_token_id = processor.tokenizer.eos_token_id
-    
+
     return model, processor
 
 def collate_fn(batch):

@@ -1,6 +1,5 @@
 import os
 
-# TẮT WARNING
 os.environ["HF_HUB_DISABLE_SYMLINKS_WARNING"] = "1"
 os.environ["TRANSFORMERS_NO_ADVISORY_WARNINGS"] = "1"
 os.environ["TORCH_CPP_LOG_LEVEL"] = "ERROR"
@@ -16,24 +15,21 @@ warnings.filterwarnings("ignore")
 def train():
     torch.cuda.empty_cache()
     torch.backends.cudnn.benchmark = True
-    torch.set_float32_matmul_precision('high') 
-    
+    torch.set_float32_matmul_precision('high')
+
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
-    # Khởi tạo mô hình
     model, processor = setup_model_and_processor(device)
 
-    # Load Dataset
     train_dataset = DonutDataset(
-        r"d:\data\HUIT\Nam3\HK2\Deep Learning\TaiLieuThayBao\Project\Donut\Version2\Train_data\train_metadata_clean.jsonl", 
+        r"d:\data\HUIT\Nam3\HK2\Deep Learning\TaiLieuThayBao\Project\Donut\Version2\Train_data\train_metadata_clean.jsonl",
         processor, split="train"
     )
     val_dataset = DonutDataset(
-        r"d:\data\HUIT\Nam3\HK2\Deep Learning\TaiLieuThayBao\Project\Donut\Version2\Train_data\val_metadata_clean.jsonl", 
+        r"d:\data\HUIT\Nam3\HK2\Deep Learning\TaiLieuThayBao\Project\Donut\Version2\Train_data\val_metadata_clean.jsonl",
         processor, split="val"
     )
 
-    # Xác định đường dẫn tuyệt đối cho Version2
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))
     CHECKPOINT_DIR = os.path.join(BASE_DIR, "donut_checkpoints")
     RESULT_DIR = os.path.join(BASE_DIR, "donut_result")
@@ -42,7 +38,7 @@ def train():
         output_dir=CHECKPOINT_DIR,
         per_device_train_batch_size=2,
         gradient_accumulation_steps=4,
-        num_train_epochs=50,             
+        num_train_epochs=50,
         learning_rate=5e-5,
         lr_scheduler_type="cosine",
         warmup_steps=100,
@@ -70,8 +66,7 @@ def train():
 
     print(f"Bắt đầu Training Version 2... (Lưu tại: {CHECKPOINT_DIR})")
     trainer.train()
-    
-    # Lưu kết quả cuối cùng vào folder result của Version2
+
     model.save_pretrained(RESULT_DIR)
     processor.save_pretrained(RESULT_DIR)
     print(f"Đã lưu mô hình cuối cùng tại {RESULT_DIR}")

@@ -6,7 +6,6 @@ from PIL import Image
 from transformers import DonutProcessor, VisionEncoderDecoderModel
 import re
 
-# --- CẤU HÌNH ---
 MODEL_PATH = r"D:\data\HUIT\Nam3\HK2\Deep Learning\TaiLieuThayBao\Project\Donut\Version2\donut_result"
 VAL_METADATA = r"D:\data\HUIT\Nam3\HK2\Deep Learning\TaiLieuThayBao\Project\Donut\Version2\Train_data\val_metadata.jsonl"
 VAL_IMG_DIR = r"D:\data\HUIT\Nam3\HK2\Deep Learning\TaiLieuThayBao\Project\Donut\Version2\Train_data\val"
